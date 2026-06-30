@@ -1,3 +1,6 @@
+// 插件 Pages 通过 bridge 与后端交互：
+// - bridge.apiGet("records") -> GET /api/plug/<plugin_name>/records
+// - bridge.apiGet("groups")  -> GET /api/plug/<plugin_name>/groups
 const bridge = window.AstrBotPluginPage;
 
 const elGroupSelect = document.getElementById("groupSelect");
@@ -94,6 +97,12 @@ async function loadRecords() {
     state.total = Number(resp?.total || 0);
     renderRows(resp?.items || []);
     syncMeta();
+  } catch (e) {
+    state.total = 0;
+    elTbody.innerHTML = `<tr><td class="muted" colspan="5">加载失败：${escapeHtml(
+      e?.message || String(e)
+    )}</td></tr>`;
+    syncMeta();
   } finally {
     elRefresh.disabled = false;
   }
@@ -131,4 +140,3 @@ elNext.addEventListener("click", () => {
 await bridge.ready();
 await loadGroups();
 await loadRecords();
-

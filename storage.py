@@ -9,6 +9,8 @@ from typing import Any
 
 @dataclass(frozen=True)
 class StoredMessage:
+    """用于 WebUI 列表展示的消息记录（不包含大字段）。"""
+
     id: int
     created_at: int
     platform: str
@@ -22,6 +24,15 @@ class StoredMessage:
 
 
 class MessageStore:
+    """
+    SQLite 归档存储。
+
+    设计要点：
+    - 每次操作都新建连接：避免跨线程复用连接导致的问题（本插件写入在 asyncio.to_thread 中进行）。
+    - 使用 WAL：提升并发读写体验。
+    - 保留条数上限：在插入后清理最旧数据，避免无限增长。
+    """
+
     def __init__(self, db_path: Path, *, max_records: int) -> None:
         self._db_path = db_path
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -31,6 +42,7 @@ class MessageStore:
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self._db_path, isolation_level=None)
         conn.row_factory = sqlite3.Row
+        # WAL + NORMAL 是常见组合：在保证可靠性的同时获得更好性能。
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA synchronous=NORMAL")
         return conn
@@ -99,6 +111,7 @@ class MessageStore:
             )
             inserted_id = int(cur.lastrowid)
             if self._max_records > 0:
+                # 删除最旧的记录：保留 created_at 最新的 max_records 条。
                 conn.execute(
                     """
                     DELETE FROM messages
@@ -168,16 +181,30 @@ class MessageStore:
         with self._connect() as conn:
             rows = conn.execute(sql).fetchall()
             return [
-                {"group_id": str(r["group_id"]), "count": int(r["cnt"]), "last_ts": int(r["last_ts"] or 0)}
+                {
+                    "group_id": str(r["group_id"]),
+                    "count": int(r["cnt"]),
+                    "last_ts": int(r["last_ts"] or 0),
+                }
                 for r in rows
             ]
 
 
 def safe_json_dumps(value: Any) -> str:
+    """统一 JSON 序列化风格：紧凑、保留中文、对未知类型用 str 兜底。"""
+
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
 def serialize_message_chain(chain: Any) -> str:
+    """
+    将消息链转换为可落库的 JSON。
+
+    备注：
+    - 这里不依赖消息段的具体实现，只做尽量保留字段的弱结构化序列化。
+    - 该字段默认不保存（可通过配置 storage.store_message_chain 打开），避免占用过多空间。
+    """
+
     if not isinstance(chain, list):
         return "[]"
     items: list[dict[str, Any]] = []
@@ -198,6 +225,12 @@ def serialize_message_chain(chain: Any) -> str:
 
 
 def serialize_raw_message(raw: Any) -> str:
+    """
+    尝试把适配器原始消息序列化为 JSON。
+
+    注意：该字段可能包含平台侧冗余数据，仅用于排障/回溯，不建议在日志里直接打印。
+    """
+
     if raw is None:
         return "null"
     if isinstance(raw, (dict, list, str, int, float, bool)):
@@ -222,4 +255,3 @@ def _build_where(*, group_id: str | None, q: str | None) -> tuple[str, tuple[Any
     if not clauses:
         return "", ()
     return " WHERE " + " AND ".join(clauses), tuple(params)
-
