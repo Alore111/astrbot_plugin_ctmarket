@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CTMarket 归档记录</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <h1 class="title">群聊记录</h1>
+      <div class="toolbar">
+        <label class="field">
+          <span>群</span>
+          <select id="groupSelect"></select>
+        </label>
+        <label class="field field-grow">
+          <span>搜索</span>
+          <input id="qInput" type="search" placeholder="按消息文本搜索" />
+        </label>
+        <button id="refreshBtn" type="button">刷新</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="meta">
+        <span id="summary"></span>
+        <div class="pager">
+          <button id="prevBtn" type="button">上一页</button>
+          <span id="pageInfo"></span>
+          <button id="nextBtn" type="button">下一页</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>时间</th>
+              <th>群 ID</th>
+              <th>发送者</th>
+              <th>内容</th>
+              <th>规则</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
+

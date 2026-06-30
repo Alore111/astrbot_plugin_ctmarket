@@ -1,0 +1,92 @@
+{
+  "enable": {
+    "type": "bool",
+    "description": "是否启用群聊内容监听与归档",
+    "default": false
+  },
+  "rules": {
+    "type": "template_list",
+    "description": "监听规则列表（命中任一启用规则即可入库）",
+    "templates": {
+      "keyword_or_regex": {
+        "name": "关键词/正则规则",
+        "hint": "按群 ID 过滤，并用关键词/正则对消息文本做包含/排除匹配。",
+        "items": {
+          "enabled": {
+            "type": "bool",
+            "description": "是否启用该规则",
+            "default": true
+          },
+          "name": {
+            "type": "string",
+            "description": "规则名称（用于入库标记）",
+            "default": "rule_1"
+          },
+          "group_ids": {
+            "type": "list",
+            "description": "匹配的群 ID 列表（空表示所有群）",
+            "default": []
+          },
+          "include_keywords": {
+            "type": "list",
+            "description": "包含关键词（命中任一即算通过；空表示不限制）",
+            "default": []
+          },
+          "exclude_keywords": {
+            "type": "list",
+            "description": "排除关键词（命中任一即拒绝）",
+            "default": []
+          },
+          "include_regex": {
+            "type": "list",
+            "description": "包含正则（命中任一即算通过；空表示不限制）",
+            "default": []
+          },
+          "exclude_regex": {
+            "type": "list",
+            "description": "排除正则（命中任一即拒绝）",
+            "default": []
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "type": "object",
+    "description": "存储相关配置",
+    "items": {
+      "db_filename": {
+        "type": "string",
+        "description": "SQLite 文件名（存储在插件数据目录下）",
+        "default": "records.sqlite3"
+      },
+      "max_records": {
+        "type": "int",
+        "description": "最大保留记录数（<=0 表示不做上限）",
+        "default": 50000
+      },
+      "store_message_chain": {
+        "type": "bool",
+        "description": "是否额外保存 message_chain 的 JSON（可能更大）",
+        "default": false
+      }
+    }
+  },
+  "webui": {
+    "type": "object",
+    "description": "WebUI 展示配置",
+    "items": {
+      "default_page_size": {
+        "type": "int",
+        "description": "默认每页条数",
+        "default": 50
+      },
+      "max_page_size": {
+        "type": "int",
+        "description": "最大每页条数",
+        "default": 200
+      }
+    }
+  }
+}
+
