@@ -7,6 +7,7 @@
   "rules": {
     "type": "template_list",
     "description": "监听规则列表（命中任一启用规则即可入库）",
+    "hint": "需要 AstrBot >= v4.10.4 才支持可视化“添加条目”。如果你点击添加没有反应，请改用下方 rules_json。",
     "templates": {
       "keyword_or_regex": {
         "name": "关键词/正则规则",
@@ -51,6 +52,15 @@
       }
     }
   },
+  "rules_json": {
+    "type": "text",
+    "description": "监听规则列表（JSON 编辑器兼容模式）",
+    "hint": "当 rules 的“添加条目”不可用时使用。格式为 JSON 数组，每个元素是一个规则对象。",
+    "obvious_hint": true,
+    "editor_mode": true,
+    "editor_language": "json",
+    "default": "[\n  {\n    \"enabled\": true,\n    \"name\": \"rule_1\",\n    \"group_ids\": [\"123456\"],\n    \"include_keywords\": [\"收\", \"出\"],\n    \"exclude_keywords\": [],\n    \"include_regex\": [],\n    \"exclude_regex\": []\n  }\n]\n"
+  },
   "storage": {
     "type": "object",
     "description": "存储相关配置",
@@ -89,4 +99,3 @@
     }
   }
 }
-

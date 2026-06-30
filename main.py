@@ -126,7 +126,26 @@ class CTMarketPlugin(Star):
         return raw if isinstance(raw, dict) else {}
 
     def _get_rules_config(self) -> object:
-        return self.config.get("rules")
+        raw_rules = self.config.get("rules")
+        if isinstance(raw_rules, list) and raw_rules:
+            return raw_rules
+
+        rules_json = self.config.get("rules_json")
+        if not isinstance(rules_json, str) or not rules_json.strip():
+            return raw_rules
+
+        try:
+            parsed = json.loads(rules_json)
+        except json.JSONDecodeError as e:
+            logger.warning(
+                f'[{PLUGIN_NAME}] rules_json_parse_failed err="{e.msg}" line={e.lineno} col={e.colno}'
+            )
+            return []
+
+        if not isinstance(parsed, list):
+            logger.warning(f"[{PLUGIN_NAME}] rules_json_invalid_root type={type(parsed).__name__}")
+            return []
+        return parsed
 
     def _get_rules_fingerprint(self) -> str:
         """
@@ -135,7 +154,10 @@ class CTMarketPlugin(Star):
         规则编译包含正则编译，频繁进行会造成不必要开销；同时也避免重复输出无效正则告警。
         """
 
-        raw = self._get_rules_config()
+        raw = {
+            "rules": self.config.get("rules"),
+            "rules_json": self.config.get("rules_json"),
+        }
         try:
             payload = json.dumps(raw, ensure_ascii=False, sort_keys=True, default=str)
         except TypeError:
